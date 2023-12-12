@@ -27,8 +27,6 @@ class Etl:
         # Calculando a duração da viagem
         fact_yellow_taxi['trip_duration'] = (fact_yellow_taxi['tpep_dropoff_datetime'] - fact_yellow_taxi['tpep_pickup_datetime']).dt.total_seconds() / 3600
 
-        fact_yellow_taxi['trip_distance'] = fact_yellow_taxi['trip_distance']
-
         # Calculando a tarifa final
         fact_yellow_taxi['final_fare'] = fact_yellow_taxi['total_amount'] + fact_yellow_taxi['extra'] + fact_yellow_taxi['mta_tax'] + fact_yellow_taxi['improvement_surcharge'] + fact_yellow_taxi['tip_amount'] + fact_yellow_taxi['tolls_amount'] + fact_yellow_taxi['congestion_surcharge'] + fact_yellow_taxi['airport_fee']
         
