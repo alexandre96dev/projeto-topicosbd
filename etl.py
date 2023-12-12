@@ -2,9 +2,7 @@ import pandas as pd
 from database import Database
 class Etl:
     def etl(self):
-        meses = ['01', '02']
-
-        # dataframe_01 = pd.read_parquet('databases/yellow_tripdata_2023-01.parquet')
+        dataframe_01 = pd.read_parquet('databases/yellow_tripdata_2023-01.parquet')
         # dataframe_02 = pd.read_parquet('databases/yellow_tripdata_2023-02.parquet')
         # dataframe_03 = pd.read_parquet('databases/yellow_tripdata_2023-03.parquet')
         # dataframe_04 = pd.read_parquet('databases/yellow_tripdata_2023-04.parquet')
@@ -14,36 +12,44 @@ class Etl:
         # dataframe_08 = pd.read_parquet('databases/yellow_tripdata_2023-08.parquet')
         # dataframe_09 = pd.read_parquet('databases/yellow_tripdata_2023-09.parquet')
 
-        # dataframe = pd.concat([dataframe_01, dataframe_02, dataframe_03, dataframe_04, dataframe_05, dataframe_06, dataframe_07, dataframe_08, dataframe_09])
-
-        df = pd.read_parquet('databases/yellow_tripdata_2023-01.parquet')
-
-        df = df.dropna(subset=['tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count'])
+        # fact_yellow_taxi = pd.concat([dataframe_01, dataframe_02, dataframe_03, dataframe_04, dataframe_05, dataframe_06, dataframe_07, dataframe_08, dataframe_09])
+        
+        fact_yellow_taxi = pd.concat([dataframe_01])
 
         # Corrigindo erros de digitação ou formatação nas colunas
-        df['tpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'])
-        df['tpep_dropoff_datetime'] = pd.to_datetime(df['tpep_dropoff_datetime'])
-
-        # Normalizando os valores das colunas para garantir que estejam no formato correto
-        df['passenger_count'] = df['passenger_count'].astype('int')
-        del df['VendorID']
-        del df['store_and_fwd_flag']
+        fact_yellow_taxi['tpep_pickup_datetime'] = pd.to_datetime(fact_yellow_taxi['tpep_pickup_datetime'])
+        fact_yellow_taxi['tpep_dropoff_datetime'] = pd.to_datetime(fact_yellow_taxi['tpep_dropoff_datetime'])
         
-        # ETL
+        #tirando colunas desnecessárias
+        del fact_yellow_taxi['VendorID']
+        del fact_yellow_taxi['store_and_fwd_flag']
 
         # Calculando a duração da viagem
-        df['duracao_viagem'] = (df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime']).dt.total_seconds() / 3600
+        fact_yellow_taxi['trip_duration'] = (fact_yellow_taxi['tpep_dropoff_datetime'] - fact_yellow_taxi['tpep_pickup_datetime']).dt.total_seconds() / 3600
 
-        df['trip_distance'] = df['trip_distance'] * 1609.344
+        fact_yellow_taxi['trip_distance'] = fact_yellow_taxi['trip_distance']
 
         # Calculando a tarifa final
-        df['tarifa_final'] = df['total_amount'] + df['extra'] + df['mta_tax'] + df['improvement_surcharge'] + df['tip_amount'] + df['tolls_amount'] + df['congestion_surcharge'] + df['airport_fee']
+        fact_yellow_taxi['final_fare'] = fact_yellow_taxi['total_amount'] + fact_yellow_taxi['extra'] + fact_yellow_taxi['mta_tax'] + fact_yellow_taxi['improvement_surcharge'] + fact_yellow_taxi['tip_amount'] + fact_yellow_taxi['tolls_amount'] + fact_yellow_taxi['congestion_surcharge'] + fact_yellow_taxi['airport_fee']
         
-        dim_taxi = pd.read_csv('databases/taxi+_zone_lookup.csv')
+        #carregando e limpando dados dos códigos de localização 
+        dim_locations = pd.read_csv('databases/taxi+_zone_lookup.csv')
+        dim_locations = dim_locations.dropna(subset=['Zone', 'service_zone'])
         
+        dim_payment_type = pd.DataFrame({'id': [1,2,3,4,5,6], 'description': ['Credit card', "Cash", "No charge", "Dispute", "Unknown", "Voided trip"]})
+        dim_rate_code = pd.DataFrame({'id': [1,2,3,4,5,6], 'description': ['Standard rate', "JFK", "Newark", "Nassau or Westchester", "Negotiated fare", "Group ride"]})
+        column_exists = 'Airport_fee' in fact_yellow_taxi.columns
         
+        if column_exists:
+            del fact_yellow_taxi['Airport_fee']
         
+        fact_yellow_taxi['airport_fee'] = fact_yellow_taxi['airport_fee'].fillna(0)
         
-
-t = Etl()
-t.etl()
+        db = Database()
+        
+        dim_locations.to_csv("esquema_estrela/dim_locations.csv")
+        dim_payment_type.to_csv("esquema_estrela/dim_payment_type.csv")
+        dim_rate_code.to_csv("esquema_estrela/dim_rate_code.csv")
+        fact_yellow_taxi.to_csv("esquema_estrela/fact_yellow_taxi.csv")
+        
+        db.connection.close()

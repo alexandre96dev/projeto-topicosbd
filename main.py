@@ -1,27 +1,23 @@
-import pandas as pd
+from etl import Etl
+from grafics import Grafics
 
-schema = {
-    'dim_ratecode': ['RatecodeID'],
-    'dim_payment_type': ['payment_type'],
-    'fact_vendas': ['id_venda', 'id_cliente', 'id_produto', 'quantidade', 'valor']
-}
+feedDatabase = Etl()
 
-dataframe_ = pd.read_parquet('databases/yellow_tripdata_2023-03.parquet')
+feedDatabase.etl()
 
+menu = ["1", "2", "3"]
 
-dim_ratecode = dataframe_[schema['dim_ratecode']]
+opcao = input("Escolha uma opção: 1 - Grafico com relação duração viagem x preço final, 2 - Grafico com relação tipo de pagamento x quantidade de viagens, 3 - Grafico com relação distância percorrida x preço final \n")
 
-dim_ratecode = dim_ratecode.loc[dim_ratecode['RatecodeID'].isin([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])]
-
-dim_ratecode = dim_ratecode.drop_duplicates()
-
-
-
-dim_payment_type = dataframe_[schema['dim_payment_type']]
-
-dim_payment_type = dim_payment_type.loc[dim_payment_type['payment_type'].isin([1, 2, 3, 4, 5])]
-
-dim_payment_type = dim_payment_type.drop_duplicates()
-
-
-print(dim_payment_type)
+if opcao == menu[0]:
+    print("Opção 1 selecionada")
+    Grafics.plotDurationTripPriceFinal()
+    
+elif opcao == menu[1]:
+    print("Opção 2 selecionada")
+    Grafics.plotTripDurationByPrice()
+elif opcao == menu[2]:
+    print("Opção 3 selecionada")
+    Grafics.plotDistanceTripPriceFinal()
+else:
+    print("Opção inválida")
