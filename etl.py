@@ -1,5 +1,4 @@
 import pandas as pd
-from database import Database
 class Etl:
     def etl(self):
         dataframe_01 = pd.read_parquet('databases/yellow_tripdata_2023-01.parquet')
