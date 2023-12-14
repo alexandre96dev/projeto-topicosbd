@@ -42,11 +42,9 @@ class Etl:
         
         fact_yellow_taxi['airport_fee'] = fact_yellow_taxi['airport_fee'].fillna(0)
         
-        db = Database()
         
         dim_locations.to_csv("esquema_estrela/dim_locations.csv")
         dim_payment_type.to_csv("esquema_estrela/dim_payment_type.csv")
         dim_rate_code.to_csv("esquema_estrela/dim_rate_code.csv")
         fact_yellow_taxi.to_csv("esquema_estrela/fact_yellow_taxi.csv")
         
-        db.connection.close()
